@@ -56,57 +56,57 @@ int main(int argc, char *argv[]) {
     University *uni = initUniversity(filename);
     char *input = (char *) malloc(SIZE);
     EAction eAction = E_INVALID;
+
     while (eAction != E_END) {
         // вывод списка всех возможных команд - код команды и текст из Enum2Str
         printf("\n");
         for (int i = 1; i <= E_END; i++) {
             printf("%d%s\n", i, Enum2Str((EAction) i));
         }
+
         // ввод кода команды пользователем
         printf("Enter command: ");
         scanf("%s", input);
-        eAction = (EAction) atoi(input);
+        eAction = (EAction) strtol(input, NULL, 10);
 
         switch (eAction) {
             // обработка каждой команды и действие по ней
             case E_ADD_GROUP: {
                 printf("Enter group name: ");
-                char *groupName = (char *) malloc(SIZE);
+                char groupName[SIZE];
                 scanf("%s", groupName);
                 Group group = {{0}, 0, 0};
                 strcpy(group.name, groupName);
                 group.students = (Student *) malloc(sizeof(Student));
                 addNewGroup(uni, group);
-                free(groupName);
                 break;
             }
 
             case E_ADD_STUDENT: {
+                char groupName[SIZE];
+                char name[SIZE];
+                char surname[SIZE];
+                int year = 0;
+
                 printf("Enter group name: ");
-                char *groupName = (char *) malloc(SIZE);
                 scanf("%s", groupName);
-                printf("Create a student\nNAME SURNAME YEAR: ");
-                char *name = (char *) malloc(SIZE);
-                char *surname = (char *) malloc(SIZE);
-                int year = 2007;
-                scanf("%s %s %d", name, surname, &year);
-                Student student = {0, {0}, {0}, {0}, 0};
+                printf("Create a student\nSURNAME NAME YEAR: ");
+                scanf("%s %s %d", surname, name, &year);
+
+                Student student = {0, {0}, {0}, {0}, year};
                 strcpy(student.name, name);
                 strcpy(student.surname, surname);
                 strcpy(student.groupName, groupName);
+
                 addNewStudent(getGroup(uni, groupName), student);
-                free(groupName);
-                free(name);
-                free(surname);
                 break;
             }
 
             case E_DEL_GROUP: {
+                char groupName[SIZE];
                 printf("Enter group name: ");
-                char *groupName = (char *) malloc(SIZE);
                 scanf("%s", groupName);
                 removeGroup(uni, groupName);
-                free(groupName);
                 break;
             }
 
@@ -128,8 +128,8 @@ int main(int argc, char *argv[]) {
             }
 
             case E_PRINT_GROUP: {
+                char groupName[SIZE];
                 printf("Enter group name: ");
-                char *groupName = (char *) malloc(SIZE);
                 scanf("%s", groupName);
                 Group *group = getGroup(uni, groupName);
                 if (group == NULL) {
@@ -137,7 +137,6 @@ int main(int argc, char *argv[]) {
                 } else {
                     printGroup(*group);
                 }
-                free(groupName);
                 break;
             }
 

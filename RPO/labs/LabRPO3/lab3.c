@@ -5,28 +5,10 @@
 
 unsigned long g_Id = 1;
 
-static void *exitMalloc(size_t size) {
-    void *ptr = malloc(size);
-    if (ptr == NULL) {
-        printf("Error: malloc failed\n");
-        exit(1);
-    }
-    return ptr;
-}
-
-static void *exitRealloc(void *ptr, size_t size) {
-    void *newPtr = realloc(ptr, size);
-    if (newPtr == NULL) {
-        printf("Error: realloc failed\n");
-        exit(1);
-    }
-    return newPtr;
-}
-
 static Student *sortedStudents(Student *students, unsigned int count) {
-    for (unsigned int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
         int min = i;
-        for (unsigned int j = i + 1; j < count; j++) {
+        for (int j = i + 1; j < count; j++) {
             if (strcasecmp(students[j].surname, students[min].surname) < 0) {
                 min = j;
             }
@@ -38,40 +20,28 @@ static Student *sortedStudents(Student *students, unsigned int count) {
     return students;
 }
 
-static Group *createGroup(char *name) {
-    Group *group = (Group *) exitMalloc(sizeof(Group));
-    strcpy(group->name, name);
-    group->students = NULL;
-    group->studentsCount = 0;
-    return group;
-}
-
 University *initUniversity(const char *fileName) {
-    University *university = (University *) exitMalloc(sizeof(University));
-    university->groups = (Group *) exitMalloc(sizeof(Group));
+    University *university = (University *) malloc(sizeof(University));
+    university->groups = (Group *) malloc(sizeof(Group));
     university->groupsCount = 0;
     FILE *file = fopen(fileName, "rb");
     if (file == NULL) {
         return university;
     }
-    Student *student = (Student *) exitMalloc(sizeof(Student));
-    size_t readBytes = fread(student, sizeof(Student), 1, file);
-    unsigned long maxId = 0;
-    while (readBytes != 0) {
+    Student *student = (Student *) malloc(sizeof(Student));
+    while (fread(student, sizeof(Student), 1, file) != 0) {
         Group *group = getGroup(university, student->groupName);
         if (group == NULL) {
-            Group *newGroup = createGroup(student->groupName);
-            addNewGroup(university, *newGroup);
-            free(newGroup);
+            Group newGroup = {{0}, 0, NULL};
+            strcpy(newGroup.name, student->groupName);
+            addNewGroup(university, newGroup);
             group = getGroup(university, student->groupName);
         }
         addNewStudent(group, *student);
-        if (student->id > maxId) {
-            maxId = student->id;
+        if (student->id >= g_Id) {
+            g_Id = student->id + 1;
         }
-        readBytes = fread(student, sizeof(Student), 1, file);
     }
-    g_Id = maxId + 1;
     free(student);
     fclose(file);
     return university;
@@ -82,7 +52,7 @@ bool addNewGroup(University *university, const Group group) {
         return false;
     }
     university->groupsCount++;
-    university->groups = (Group *) exitRealloc(university->groups, university->groupsCount * sizeof(Group));
+    university->groups = (Group *) realloc(university->groups, university->groupsCount * sizeof(Group));
     university->groups[university->groupsCount - 1] = group;
     return true;
 }
@@ -92,11 +62,10 @@ bool addNewStudent(Group *group, Student student) {
         return false;
     }
     if (student.id == 0) {
-        student.id = g_Id;
-        g_Id++;
+        student.id = g_Id++;
     }
     group->studentsCount++;
-    group->students = (Student *) exitRealloc(group->students, group->studentsCount * sizeof(Student));
+    group->students = (Student *) realloc(group->students, group->studentsCount * sizeof(Student));
     group->students[group->studentsCount - 1] = student;
     group->students = sortedStudents(group->students, group->studentsCount);
     return true;
@@ -111,9 +80,9 @@ bool removeGroup(University *university, const char *name) {
         return false;
     }
     free(group->students);
-    memmove(group, group + 1, (university->groupsCount - 1) * sizeof(Group));
+    memmove(group, group + 1, (university->groupsCount - 1 - (group - university->groups)) * sizeof(Group));
     university->groupsCount--;
-    exitRealloc(university->groups, (university->groupsCount) * sizeof(Group));
+    university->groups = realloc(university->groups, (university->groupsCount) * sizeof(Group));
     return true;
 }
 
@@ -126,9 +95,9 @@ bool removeStudent(University *university, const unsigned long id) {
         return false;
     }
     Group *group = getGroup(university, student->groupName);
-    memmove(student, student + 1, (group->studentsCount - 1) * sizeof(Student));
+    memmove(student, student + 1, (group->studentsCount - 1 - (student - group->students)) * sizeof(Student));
     group->studentsCount--;
-    exitRealloc(group->students, (group->studentsCount) * sizeof(Student));
+    group->students = realloc(group->students, (group->studentsCount) * sizeof(Student));
     return true;
 }
 
