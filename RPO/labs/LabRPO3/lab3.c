@@ -5,6 +5,15 @@
 
 unsigned long g_Id = 1;
 
+static bool isCorrectFilename(const char* filename)
+{
+    char *dot = strrchr(filename, '.');
+    if (dot == NULL || strcmp(dot, ".dat") != 0) {
+        return false;
+    }
+    return true;
+}
+
 static Student *sortedStudents(Student *students, unsigned int count) {
     for (int i = 0; i < count; i++) {
         int min = i;
@@ -25,7 +34,8 @@ University *initUniversity(const char *fileName) {
     university->groups = (Group *) malloc(sizeof(Group));
     university->groupsCount = 0;
     FILE *file = fopen(fileName, "rb");
-    if (file == NULL) {
+    if (!isCorrectFilename(fileName) || file == NULL) {
+        fclose(file);
         return university;
     }
     Student *student = (Student *) malloc(sizeof(Student));
@@ -38,9 +48,6 @@ University *initUniversity(const char *fileName) {
             group = getGroup(university, student->groupName);
         }
         addNewStudent(group, *student);
-        if (student->id >= g_Id) {
-            g_Id = student->id + 1;
-        }
     }
     free(student);
     fclose(file);
@@ -63,6 +70,8 @@ bool addNewStudent(Group *group, Student student) {
     }
     if (student.id == 0) {
         student.id = g_Id++;
+    } else if (student.id >= g_Id) {
+        g_Id = student.id + 1;
     }
     group->studentsCount++;
     group->students = (Student *) realloc(group->students, group->studentsCount * sizeof(Student));
@@ -117,8 +126,8 @@ Student *getStudent(const University *university, const unsigned long id) {
     if (university == NULL) {
         return NULL;
     }
-    for (unsigned int i = 0; i < university->groupsCount; i++) {
-        for (unsigned int j = 0; j < university->groups[i].studentsCount; j++) {
+    for (int i = 0; i < university->groupsCount; i++) {
+        for (int j = 0; j < university->groups[i].studentsCount; j++) {
             if (university->groups[i].students[j].id == id) {
                 return &university->groups[i].students[j];
             }
@@ -135,7 +144,7 @@ void printUniversity(const University *university) {
         printf("University is empty\n");
         return;
     }
-    for (unsigned group = 0; group < university->groupsCount; group++) {
+    for (int group = 0; group < university->groupsCount; group++) {
         printf("-------------------------------------------------------------------------------\n");
         printGroup(university->groups[group]);
     }
@@ -148,7 +157,7 @@ void printGroup(const Group group) {
         return;
     }
     printf("%s\n", group.name);
-    for (unsigned student = 0; student < group.studentsCount; student++) {
+    for (int student = 0; student < group.studentsCount; student++) {
         printStudent(group.students[student]);
     }
 }
@@ -161,7 +170,7 @@ void freeUniversity(University *university) {
     if (university == NULL) {
         return;
     }
-    for (unsigned int i = 0; i < university->groupsCount; i++) {
+    for (int i = 0; i < university->groupsCount; i++) {
         free(university->groups[i].students);
     }
     free(university->groups);
@@ -174,11 +183,12 @@ bool saveToFile(const char *fileName, const University *university) {
         return false;
     }
     FILE *file = fopen(fileName, "wb");
-    if (file == NULL) {
+    if (!isCorrectFilename(fileName) || file == NULL) {
+        fclose(file);
         return false;
     }
-    for (unsigned int i = 0; i < university->groupsCount; i++) {
-        for (unsigned int j = 0; j < university->groups[i].studentsCount; j++) {
+    for (int i = 0; i < university->groupsCount; i++) {
+        for (int j = 0; j < university->groups[i].studentsCount; j++) {
             fwrite(&university->groups[i].students[j], sizeof(Student), 1, file);
         }
     }
