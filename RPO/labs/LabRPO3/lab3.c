@@ -111,19 +111,9 @@ bool removeGroup(University *university, const char *name) {
         return false;
     }
     free(group->students);
-    for (unsigned int i = 0; i < university->groupsCount; i++) {
-        if (strcmp(university->groups[i].name, name) == 0) {
-            for (unsigned int j = i; j < university->groupsCount - 1; j++) {
-                university->groups[j] = university->groups[j + 1];
-            }
-            university->groupsCount--;
-            if (university->groupsCount != 0) {
-                university->groups = (Group *) exitRealloc(university->groups, university->groupsCount * sizeof(Group));
-            }
-            return true;
-        }
-    }
+    memmove(group, group + 1, (university->groupsCount - 1) * sizeof(Group));
     university->groupsCount--;
+    exitRealloc(university->groups, (university->groupsCount) * sizeof(Group));
     return true;
 }
 
@@ -136,19 +126,9 @@ bool removeStudent(University *university, const unsigned long id) {
         return false;
     }
     Group *group = getGroup(university, student->groupName);
-    for (unsigned int i = 0; i < group->studentsCount; i++) {
-        if (group->students[i].id == id) {
-            for (unsigned int j = i; j < group->studentsCount - 1; j++) {
-                group->students[j] = group->students[j + 1];
-            }
-            group->studentsCount--;
-            if (group->studentsCount != 0) {
-                group->students = (Student *) exitRealloc(group->students, group->studentsCount * sizeof(Student));
-            }
-            return true;
-        }
-    }
+    memmove(student, student + 1, (group->studentsCount - 1) * sizeof(Student));
     group->studentsCount--;
+    exitRealloc(group->students, (group->studentsCount) * sizeof(Student));
     return true;
 }
 
